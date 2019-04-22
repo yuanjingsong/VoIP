@@ -17,7 +17,7 @@ public class UDPServer {
             String str_receive = new String(dp_receive.getData(),0, dp_receive.getLength())
                             +  "from " + dp_receive.getAddress().getHostAddress() + ":" + dp_receive.getPort();
             System.out.println(str_receive);
-            DatagramPacket dp_send = new DatagramPacket(send.getBytes(), send.length(), dp_receive.getAddress(), UDPClient.UDPPORT);
+            DatagramPacket dp_send = new DatagramPacket(send.getBytes(), send.length(), dp_receive.getAddress(), 5330);
             ds.send(dp_send);
             dp_receive.setLength(1024);
         }
