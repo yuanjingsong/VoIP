@@ -10,10 +10,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
-public class IpServer implements Runnable {
+public class IpServer {
     private static int TCPPORT = 7001;
     private static int UDPPORT = 7002;
     Socket socket;
+    ExecutorService threadPool;
+    ListenUDP listenUDP;
+    ListenTCP listenTCP;
     static int getTCPPORT() {
         return  TCPPORT;
     }
@@ -22,19 +25,20 @@ public class IpServer implements Runnable {
         return UDPPORT;
     }
 
-    public IpServer(Socket socket) {
-        this.socket =socket;
-    }
 
-    public void Init() throws IOException {
+    public IpServer() throws IOException {
         ServerSocket ServerSocket = new ServerSocket(TCPPORT);
         ExecutorService threadPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(4);
-        Socket socket = null;
-        boolean f = true;
-        while (f) {
-            socket = ServerSocket.accept();
-            threadPool.submit(new Thread(new IpServer(socket)));
-        }
+    }
+
+    public IpServer(Socket socket, ExecutorService threadPool) {
+        this.socket =socket;
+        this.threadPool = threadPool;
+    }
+
+
+    public static void main(String[] args) throws IOException {
+        IpServer ipServer = new IpServer();
     }
 
     public String getIp(Socket socket) {
@@ -46,13 +50,5 @@ public class IpServer implements Runnable {
 
     }
 
-    @Override
-    public void run() {
-        try {
-            BufferedReader buf = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-        }catch (Exception e) {
-
-        }
-    }
 }

@@ -8,8 +8,8 @@ public class ListenTCP implements Runnable {
     String IP;
 
     public ListenTCP(String IP, int port) {
-        IP = IP;
-        Port = port;
+        this.IP = IP;
+        this.Port = port;
     }
 
     @Override

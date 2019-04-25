@@ -4,28 +4,22 @@ import java.io.InputStreamReader;
 import java.io.InterruptedIOException;
 import java.net.*;
 
-public class UDPClient {
+public class UDPClient implements Runnable {
 
     private static final int TIMEOUT = 5000 ;
     private static final int MAXNUM = 5;
     int udpPort;
+    DatagramSocket socket;
 
-    public UDPClient(int udpPort) {
+    public UDPClient(String host, int udpPort) throws UnknownHostException, SocketException {
         this.udpPort= udpPort;
+        InetAddress address = InetAddress.getByName(host);
+        this.socket = new DatagramSocket(udpPort, address);
     }
 
-    public void ClientSendMsg (byte[] data, InetAddress loc, int PORT) throws IOException {
-        DatagramPacket msg= new DatagramPacket(data, data.length, loc, PORT);
-        DatagramSocket ds = new DatagramSocket(this.udpPort);
-        boolean receviedRes = false;
-        int reSendTime = 0;
-        byte[] receiveData = new byte[1024];
-        while(!receviedRes && reSendTime < MAXNUM) {
-            ds.send(msg);
-            ClientReceiveMsg(receiveData, ds);
-        }
+    @Override
+    public void run() {
+
     }
-    public void ClientReceiveMsg (byte [] data, DatagramSocket ds) throws IOException {
-        ds.receive(new DatagramPacket(data, data.length));
-    }
+
 }

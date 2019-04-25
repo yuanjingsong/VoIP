@@ -1,7 +1,6 @@
+import javax.sound.sampled.*;
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.SocketException;
+import java.net.*;
 
 /**
  * A class use to listen to a specify UDP port
@@ -10,32 +9,39 @@ import java.net.SocketException;
  */
 public class ListenUDP implements Runnable{
     int Port;
-
-    public ListenUDP(int port) {
+    DatagramSocket socket;
+    public ListenUDP(String host, int port) throws UnknownHostException, SocketException {
+        InetAddress socket = InetAddress.getByName(host);
         Port = port;
+        this.socket = new DatagramSocket(port, socket);
+        System.out.println("now ths listen udp port is : " + port);
     }
 
     @Override
     public void run() {
         try {
-            DatagramSocket ds = new DatagramSocket(this.Port);
             byte [] buf = new byte[1024];
             DatagramPacket dp_receive = new DatagramPacket(buf, 1024);
+            AudioFormat format = new AudioFormat(2560, 16, 2, true, true);
+            DataLine.Info sourceInfo = new DataLine.Info(SourceDataLine.class, format);
             boolean f = true;
             while(f) {
-                ds.receive(dp_receive);
-                transferSound(buf);
+                SourceDataLine sourceLine = (SourceDataLine) AudioSystem.getLine(sourceInfo);
+                socket.receive(dp_receive);
+                String line = new String (buf, 0, buf.length);
+                System.out.println(line);
+                //transferSound(buf);
+                sourceLine.open(format);
+                sourceLine.start();
+                sourceLine.write(buf, 0, buf.length);
             }
         } catch (SocketException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (LineUnavailableException e) {
+            e.printStackTrace();
         }
-    }
-
-    private static void transferSound(byte[] voiceData) {
-        System.out.println("call transfert Sound");
-        return ;
     }
 
 }
