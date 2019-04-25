@@ -1,43 +1,42 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+/** this thread is to listen to the port (8002)
+ * in case some body call
+ * so if somebody use tcp call
+ * this thread will run
+ */
+
+import javax.sound.sampled.LineUnavailableException;
+import java.io.*;
+import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.BufferUnderflowException;
 
 public class ListenTCP implements Runnable {
-    int Port;
-    String IP;
+    ServerSocket serverSocket;
+    //int Port;
+    //String IP;
 
-    public ListenTCP(String IP, int port) {
-        this.IP = IP;
-        this.Port = port;
+    public ListenTCP(ServerSocket serverSocket) {
+        this.serverSocket = serverSocket;
     }
 
     @Override
     public void run() {
+        Socket socket = null;
+        boolean f = true;
         try {
-            Socket listenTCP;
-            BufferedReader dataRec;
-            listenTCP = new Socket(this.IP, this.Port);
-            listenTCP.setSoTimeout(10000);
-            dataRec = new BufferedReader(new InputStreamReader(listenTCP.getInputStream()));
-            byte[] voiceData;
-
-            boolean flag = true;
-
-            while (flag) {
-                String input = dataRec.readLine();
-                voiceData = input.getBytes();
-                transferSound(voiceData);
+            while(f) {
+                socket =  serverSocket.accept();
+                DataInputStream dIn = new DataInputStream(socket.getInputStream()) ;
+                int length = dIn.readInt();
+                if (length > 0) {
+                    byte [] voiceData = new byte[length];
+                    dIn.readFully(voiceData, 0, voiceData.length);
+                    SoundUtil.playSound(voiceData);
+                }
             }
-
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private static void transferSound(byte[] voiceData) {
-
-        System.out.println("call transfer sound method");
-        return;
-    }
 }

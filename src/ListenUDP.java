@@ -19,28 +19,16 @@ public class ListenUDP implements Runnable{
 
     @Override
     public void run() {
-        try {
-            byte [] buf = new byte[1024];
-            DatagramPacket dp_receive = new DatagramPacket(buf, 1024);
-            AudioFormat format = new AudioFormat(2560, 16, 2, true, true);
-            DataLine.Info sourceInfo = new DataLine.Info(SourceDataLine.class, format);
-            boolean f = true;
-            while(f) {
-                SourceDataLine sourceLine = (SourceDataLine) AudioSystem.getLine(sourceInfo);
+        byte [] buf = new byte[1024];
+        DatagramPacket dp_receive = new DatagramPacket(buf, 1024);
+        boolean f = true;
+        while(f) {
+            try {
                 socket.receive(dp_receive);
-                String line = new String (buf, 0, buf.length);
-                System.out.println(line);
-                //transferSound(buf);
-                sourceLine.open(format);
-                sourceLine.start();
-                sourceLine.write(buf, 0, buf.length);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (SocketException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (LineUnavailableException e) {
-            e.printStackTrace();
+            SoundUtil.playSound(buf);
         }
     }
 

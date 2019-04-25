@@ -1,6 +1,3 @@
-
-import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
-
 import java.io.*;
 import java.net.*;
 import java.util.Scanner;
@@ -28,9 +25,10 @@ public class IpClient {
 
     //UDPClient udpClient;
     ListenUDP listenUDP;
+    ListenTCP listenTCP;
 
 
-    public IpClient( String otherIP) throws SocketException, UnknownHostException {
+    public IpClient() throws IOException {
         //this.udpClient = udpClient;
 
         try {
@@ -39,30 +37,53 @@ public class IpClient {
             this.listenUDP = new ListenUDP(ServerIp,UDPINPORT + 1);
             System.out.println("now the listen udp port is " + (UDPINPORT + 1) );
         }
+        ServerSocket serverSocket;
+        try {
+            serverSocket = new ServerSocket(TCPINPORT);
+            this.listenTCP = new ListenTCP(serverSocket);
+        } catch (IOException e) {
+            serverSocket = new ServerSocket(TCPINPORT + 1);
+            this.listenTCP = new ListenTCP(serverSocket);
+        }
 
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, LineUnavailableException {
         //UDPClient udpClient = new UDPClient(UDPPORT);
         client tcpClient = new client();
 
         // name is the who u want to call
         String name =  "";
+        String dialUP = "phone";
+        String usingTCP = "tcp";
 
         //String otherIP = getOtherIp(name);
         String otherIP = "127.0.0.1";
-        IpClient ipClient = new IpClient(otherIP);
 
-        ExecutorService threadPool = (ThreadPoolExecutor)Executors.newFixedThreadPool(4);
+        IpClient ipClient = new IpClient();
+
+        ExecutorService threadPool = Executors.newFixedThreadPool(4);
         threadPool.submit(ipClient.listenUDP);
+        threadPool.submit(ipClient.listenTCP);
 
         Scanner in = new Scanner(System.in);
         String dial = in.nextLine();
-        if ("phone".equals(dial)) {
+        if (dialUP.equals(dial)) {
             ipClient.callbyP2P(otherIP);
+        }else if (usingTCP.equals(dial)) {
+            ipClient.callbyTCP(otherIP);
         }
 
     }
+
+
+    /**
+     *  use this method to login
+     *  and update ip UDPINPORT TCPINPORT when login
+     *  @param name
+     *  @param pass
+     *  @throws IOException
+     */
 
     public void login(String name, String pass) throws IOException {
         Socket socket = new Socket(ServerIp, SERVERTCPPORT);
@@ -91,40 +112,6 @@ public class IpClient {
        return  iP;
     }
 
-    /**
-     * use this function to get voice data
-      * @param format
-     * @return
-     */
-
-    public byte [] getVoice(AudioFormat format) {
-        byte [] voiceData = new byte[1024];
-        try {
-            DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
-            TargetDataLine microPhone = (TargetDataLine) AudioSystem.getLine(info);
-            microPhone.open(format);
-
-            int chuckSize = 1024;
-            microPhone.start();
-
-            while(true) {
-                voiceData = new byte[microPhone.getBufferSize()/5];
-                int num = microPhone.read(voiceData, 0, voiceData.length);
-                System.out.println(num);
-                if (num == chuckSize) {
-                    break;
-                    //sendDataUsingUDP("127.0.0.1", voiceData);
-                }
-            }
-
-        } catch (LineUnavailableException e) {
-            e.printStackTrace();
-        }
-
-        return voiceData;
-
-    }
-
 
     /**
       * @param ip
@@ -150,16 +137,49 @@ public class IpClient {
      */
 
 
-    public void callbyP2P(String ip, int port) throws IOException {
+    public void callbyP2P(String ip, int port) throws IOException{
         System.out.println(ip + " " + port);
         byte [] voiceData;
         while (true) {
-            AudioFormat format = new AudioFormat(2560, 16, 2, true, true);
-            voiceData = getVoice(format);
+            voiceData = SoundUtil.getSound();
+            System.out.println(voiceData);
             sendDataUsingUDP(ip, voiceData);
         }
 
     }
+
+
+    public void callbyTCP(String ip) throws IOException {
+       callbyTCP(ip, TCPINPORT);
+    }
+
+
+    public void callbyTCP(String ip, int port) throws IOException {
+        System.out.println(ip + " " + port);
+        byte [] voiceData;
+        while (true) {
+            voiceData = SoundUtil.getSound();
+            sendDataUsingTCP(ip, voiceData);
+        }
+    }
+
+    /**
+     * send the msg using udp method
+     * and specify udp port
+     * @param ip
+     * @param port
+     * @param data
+     * @throws IOException
+     */
+
+
+    public void sendDataUsingUDP(String ip, int port ,byte[] data) throws IOException {
+        DatagramSocket socket = new DatagramSocket();
+        InetAddress targetClient = InetAddress.getByName(ip);
+        DatagramPacket packet = new DatagramPacket(data, data.length, targetClient, port);
+        socket.send(packet);
+    }
+
 
     /**
      * send the msg using udp method
@@ -170,27 +190,40 @@ public class IpClient {
      */
 
     public void sendDataUsingUDP(String ip ,byte [] data) throws IOException {
-        DatagramSocket socket = new DatagramSocket();
-        InetAddress targetClient = InetAddress.getByName(ip);
-        DatagramPacket packet = new DatagramPacket(data, data.length, targetClient, DEFAULT_SEND_MESSAGE_UDP_PORT);
-        socket.send(packet);
-
+        sendDataUsingUDP(ip, DEFAULT_SEND_MESSAGE_UDP_PORT , data);
     }
 
 
     /**
      * send the msg using tcp method
      * and port is DEFAULT_SEND_MESSAGE_TCP_PORT (8002)
+     * call method sendDataUsingTCP(String ip, int port, byte[] voiceData)
      * @param ip
      * @param voiceData
      * @throws IOException
      */
 
     public void sendDataUsingTCP(String ip, byte [] voiceData) throws IOException {
-        Socket socket = new Socket(ip, TCPINPORT);
+        sendDataUsingTCP(ip, DEFAULT_SEND_MESSAGE_TCP_PORT, voiceData);
+    }
+
+    /**
+     * send the msg using tcp method
+     * and specify the TCP port
+     * @param ip
+     * @param port
+     * @param voiceData
+     * @throws IOException
+     */
+
+
+    public void sendDataUsingTCP(String ip, int port, byte [] voiceData) throws  IOException{
+        Socket socket = new Socket(ip, port);
         socket.setSoTimeout(1000);
         DataOutputStream dOUt = new DataOutputStream(socket.getOutputStream());
         dOUt.writeInt(voiceData.length);
         dOUt.write(voiceData);
-   }
+
+    }
+
 }
