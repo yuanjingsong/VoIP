@@ -28,7 +28,7 @@ public class IpServer {
 
     public IpServer() throws IOException {
         ServerSocket ServerSocket = new ServerSocket(TCPPORT);
-        ExecutorService threadPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(4);
+        ExecutorService threadPool = Executors.newFixedThreadPool(4);
     }
 
     public IpServer(Socket socket, ExecutorService threadPool) {
@@ -49,6 +49,4 @@ public class IpServer {
     public void UpdateIp() {
 
     }
-
-
 }

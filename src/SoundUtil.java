@@ -2,6 +2,12 @@ import javax.sound.sampled.*;
 
 public class SoundUtil{
     static AudioFormat format = new AudioFormat(2560, 16, 2, true, true);
+    static AudioFormat.Encoding encoding = AudioFormat.Encoding.PCM_SIGNED;
+    static float rate = 8000f;
+    static int sampleSize = 16;
+    static boolean bigEndian = true;
+    static int channels = 1;
+//    static AudioFormat format = new AudioFormat(encoding, rate, sampleSize, channels, (sampleSize/8) *channels, rate, bigEndian);
     /**
      *  u can use this method to
      *  transfer byte data array to voice
